@@ -7,18 +7,23 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
 import mg.itu.framework.annotation.Controller;
 import com.app.framework.util.Util;
+import com.app.framework.model.UrlMethodMapping;
+import mg.itu.framework.annotation.UrlMapping;
 
 public class FrontControllerServlet extends HttpServlet {
     List<String> listControllers = new ArrayList<>();
+    Map<String, UrlMethodMapping> urlMethodMappings = new HashMap<>();
 
     public void init() throws ServletException {
-        String packageName = this.getInitParameter("scanPackage");
+        List<String> packageNames = Util.splitString(this.getInitParameter("scanPackages"), ",");
         try {
-            listControllers = Util.findClasses(packageName, Controller.class);
+            listControllers = Util.findClasses(packageNames, Controller.class);
+            Util.findUrlMethodMappings(packageNames, urlMethodMappings, Controller.class, UrlMapping.class);
         } catch (Exception e) {
             throw new ServletException("Error initializing FrontControllerServlet", e);
         }
@@ -42,16 +47,32 @@ public class FrontControllerServlet extends HttpServlet {
         String relativePath = path.substring(context.length());
         out.println("Requested Path: " + relativePath);
 
+        
         Map<String, String[]> params = request.getParameterMap();
         for (Map.Entry<String, String[]> entry : params.entrySet()) {
             String key = entry.getKey();
             String[] values = entry.getValue();
             out.println(key + "=" + String.join(",", values));
         }
+        
+        out.println();
 
-        out.println("List of Controllers:");
+        out.println("Classes annotated by @Controller:");
         for (String controller : listControllers) {
             out.println(controller);
+        }
+
+        out.println();
+
+        UrlMethodMapping supported = Util.getUrlSupported(urlMethodMappings, relativePath);
+        if (supported != null) {
+            out.println("URL info: " + relativePath + " " + supported.getClazz().getName() + " -> " + supported.getMethod().getName());
+        } else {
+            out.println("Here are all supported URLs: ");
+
+            for (String url : urlMethodMappings.keySet()) {
+                out.println("- " + url);
+            }
         }
     }
 
