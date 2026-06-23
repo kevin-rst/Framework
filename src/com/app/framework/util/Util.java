@@ -3,6 +3,7 @@ package com.app.framework.util;
 import java.io.File;
 import java.lang.annotation.Annotation;
 import java.net.URL;
+import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
 import com.app.framework.model.UrlMethodMapping;
@@ -39,9 +40,7 @@ public class Util {
         return classes;
     }
 
-    public static List<UrlMethodMapping> findUrlMethodMappings(List<String> packageNames, Class<? extends Annotation> classAnnotation, Class<? extends Annotation> methodAnnotation) throws Exception {
-        List<UrlMethodMapping> mappings = new ArrayList<>();
-
+    public static void findUrlMethodMappings(List<String> packageNames, Map<String, UrlMethodMapping> urlMethodMappings, Class<? extends Annotation> classAnnotation, Class<? extends Annotation> methodAnnotation) throws Exception {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         for (String packageName: packageNames) {
             String path = packageName.replace('.', '/');
@@ -63,15 +62,14 @@ public class Util {
 
                         for (Method m: methods) {
                             if (m.isAnnotationPresent(methodAnnotation)) {
-                                String methodName = m.getName();
                                 Annotation methAnnotation = m.getAnnotation(methodAnnotation);
 
                                 if (methAnnotation.annotationType() == UrlMapping.class) {
                                     UrlMapping urlMapping = (UrlMapping) methAnnotation;
                                     String url = urlMapping.value();
                                     
-                                    UrlMethodMapping mapping = new UrlMethodMapping(url, className, methodName);
-                                    mappings.add(mapping);
+                                    UrlMethodMapping mapping = new UrlMethodMapping(clazz, m);
+                                    urlMethodMappings.put(url, mapping);
                                 }
 
                             }
@@ -80,8 +78,6 @@ public class Util {
                 }
             }
         }
-
-        return mappings;
     }
 
     public static List<String> splitString(String str, String separator) {
@@ -89,13 +85,7 @@ public class Util {
         return new ArrayList<>(List.of(splitted));
     }
 
-    public static UrlMethodMapping getUrlSupported(List<UrlMethodMapping> urlMethodMappings, String url) {
-        for (UrlMethodMapping mapping: urlMethodMappings) {
-            if (mapping.getUrl().equals(url)) {
-                return mapping;
-            }
-        }
-
-        return null;
+    public static UrlMethodMapping getUrlSupported(Map<String, UrlMethodMapping> urlMethodMappings, String url) {
+        return urlMethodMappings.get(url);
     }
 }

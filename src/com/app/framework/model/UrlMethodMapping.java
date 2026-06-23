@@ -1,39 +1,31 @@
 package com.app.framework.model;
 
+import java.lang.reflect.Method;
+
 public class UrlMethodMapping {
-    private String url;
-    private String className;
-    private String methodName;
+    private Class<?> clazz;
+    private Method method;
 
     public UrlMethodMapping() {}
 
-    public UrlMethodMapping(String url, String className, String methodName) {
-        setUrl(url);
-        setClassName(className);
-        setMethodName(methodName);
+    public UrlMethodMapping(Class<?> clazz, Method method) {
+        setClazz(clazz);
+        setMethod(method);
     }
 
-    public String getUrl() {
-        return this.url;
+    public Class<?> getClazz() {
+        return this.clazz;
     }
 
-    public void setUrl(String url) {
-        this.url = url;
+    public void setClazz(Class<?> clazz) {
+        this.clazz = clazz;
     }
 
-    public String getClassName() {
-        return this.className;
+    public Method getMethod() {
+        return this.method;
     }
 
-    public void setClassName(String className) {
-        this.className = className;
-    }
-
-    public String getMethodName() {
-        return this.methodName;
-    }
-
-    public void setMethodName(String methodName) {
-        this.methodName = methodName;
+    public void setMethod(Method method) {
+        this.method = method;
     }
 }

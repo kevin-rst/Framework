@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
 import mg.itu.framework.annotation.Controller;
@@ -16,13 +17,13 @@ import mg.itu.framework.annotation.UrlMapping;
 
 public class FrontControllerServlet extends HttpServlet {
     List<String> listControllers = new ArrayList<>();
-    List<UrlMethodMapping> urlMethodMappings = new ArrayList<>();
+    Map<String, UrlMethodMapping> urlMethodMappings = new HashMap<>();
 
     public void init() throws ServletException {
         List<String> packageNames = Util.splitString(this.getInitParameter("scanPackages"), ",");
         try {
             listControllers = Util.findClasses(packageNames, Controller.class);
-            urlMethodMappings = Util.findUrlMethodMappings(packageNames, Controller.class, UrlMapping.class);
+            Util.findUrlMethodMappings(packageNames, urlMethodMappings, Controller.class, UrlMapping.class);
         } catch (Exception e) {
             throw new ServletException("Error initializing FrontControllerServlet", e);
         }
@@ -65,12 +66,12 @@ public class FrontControllerServlet extends HttpServlet {
 
         UrlMethodMapping supported = Util.getUrlSupported(urlMethodMappings, relativePath);
         if (supported != null) {
-            out.println("URL info: " + supported.getUrl() + " " + supported.getClassName() + " -> " + supported.getMethodName());
+            out.println("URL info: " + relativePath + " " + supported.getClazz().getName() + " -> " + supported.getMethod().getName());
         } else {
             out.println("Here are all supported URLs: ");
 
-            for (UrlMethodMapping mapping: urlMethodMappings) {
-                out.println("- " + mapping.getUrl());
+            for (String url : urlMethodMappings.keySet()) {
+                out.println("- " + url);
             }
         }
     }
