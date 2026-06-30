@@ -15,6 +15,7 @@ import com.app.framework.util.Util;
 import com.app.framework.model.UrlMethodMapping;
 import com.app.framework.model.UrlMethod;
 import mg.itu.framework.annotation.UrlMapping;
+import java.lang.reflect.Constructor;
 
 public class FrontControllerServlet extends HttpServlet {
     List<String> listControllers = new ArrayList<>();
@@ -68,6 +69,20 @@ public class FrontControllerServlet extends HttpServlet {
         UrlMethodMapping supported = urlMethodMappings.get(urlMethod);
         if (supported != null) {
             out.println("URL info: " + urlMethod.getHttpMethod()  + " " + urlMethod.getUrl() + " " + supported.getClazz().getName() + " -> " + supported.getMethod().getName());
+
+            try {
+                Constructor<?> constructor = supported.getClazz().getDeclaredConstructor();
+                Object controllerInstance = constructor.newInstance();
+
+                Object[] args = new Object[supported.getMethod().getParameterCount()];
+
+                // completing the args array
+
+                Object result = supported.getMethod().invoke(controllerInstance, args);
+                out.println("Output: " + result);
+            } catch (Exception e) {
+                e.printStackTrace(out);
+            }
         } else {
             out.println("Here are all supported URLs: ");
 
