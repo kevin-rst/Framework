@@ -18,14 +18,13 @@ import mg.itu.framework.annotation.UrlMapping;
 import java.lang.reflect.Constructor;
 
 public class FrontControllerServlet extends HttpServlet {
-    List<String> listControllers = new ArrayList<>();
-    Map<UrlMethod, UrlMethodMapping> urlMethodMappings = new HashMap<>();
+    List<String> listControllers;
+    Map<UrlMethod, UrlMethodMapping> urlMethodMappings;
 
     public void init() throws ServletException {
-        List<String> packageNames = Util.splitString(this.getInitParameter("scanPackages"), ",");
         try {
-            listControllers = Util.findClasses(packageNames, Controller.class);
-            Util.findUrlMethodMappings(packageNames, urlMethodMappings, Controller.class, UrlMapping.class);
+            listControllers = (List<String>) getServletContext().getAttribute("listControllers");
+            urlMethodMappings = (Map<UrlMethod, UrlMethodMapping>) getServletContext().getAttribute("urlMethodMappings");
         } catch (Exception e) {
             throw new ServletException("Error initializing FrontControllerServlet", e);
         }
@@ -74,11 +73,7 @@ public class FrontControllerServlet extends HttpServlet {
                 Constructor<?> constructor = supported.getClazz().getDeclaredConstructor();
                 Object controllerInstance = constructor.newInstance();
 
-                Object[] args = new Object[supported.getMethod().getParameterCount()];
-
-                // completing the args array
-
-                Object result = supported.getMethod().invoke(controllerInstance, args);
+                Object result = supported.getMethod().invoke(controllerInstance);
                 out.println("Output: " + result);
             } catch (Exception e) {
                 e.printStackTrace(out);
