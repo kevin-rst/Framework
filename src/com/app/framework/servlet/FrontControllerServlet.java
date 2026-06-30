@@ -13,11 +13,12 @@ import java.util.ArrayList;
 import mg.itu.framework.annotation.Controller;
 import com.app.framework.util.Util;
 import com.app.framework.model.UrlMethodMapping;
+import com.app.framework.model.UrlMethod;
 import mg.itu.framework.annotation.UrlMapping;
 
 public class FrontControllerServlet extends HttpServlet {
     List<String> listControllers = new ArrayList<>();
-    Map<String, UrlMethodMapping> urlMethodMappings = new HashMap<>();
+    Map<UrlMethod, UrlMethodMapping> urlMethodMappings = new HashMap<>();
 
     public void init() throws ServletException {
         List<String> packageNames = Util.splitString(this.getInitParameter("scanPackages"), ",");
@@ -47,7 +48,6 @@ public class FrontControllerServlet extends HttpServlet {
         String relativePath = path.substring(context.length());
         out.println("Requested Path: " + relativePath);
 
-        
         Map<String, String[]> params = request.getParameterMap();
         for (Map.Entry<String, String[]> entry : params.entrySet()) {
             String key = entry.getKey();
@@ -64,16 +64,18 @@ public class FrontControllerServlet extends HttpServlet {
 
         out.println();
 
-        UrlMethodMapping supported = Util.getUrlSupported(urlMethodMappings, relativePath);
+        UrlMethod urlMethod = new UrlMethod(relativePath, request.getMethod().toUpperCase());
+        UrlMethodMapping supported = urlMethodMappings.get(urlMethod);
         if (supported != null) {
-            out.println("URL info: " + relativePath + " " + supported.getClazz().getName() + " -> " + supported.getMethod().getName());
+            out.println("URL info: " + urlMethod.getHttpMethod()  + " " + urlMethod.getUrl() + " " + supported.getClazz().getName() + " -> " + supported.getMethod().getName());
         } else {
             out.println("Here are all supported URLs: ");
 
-            for (String url : urlMethodMappings.keySet()) {
-                out.println("- " + url);
+            for (UrlMethod urlMeth: urlMethodMappings.keySet()) {
+                out.println("- " + urlMeth.getHttpMethod() + " " + urlMeth.getUrl());
             }
         }
+
     }
 
 }

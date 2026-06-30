@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
 import com.app.framework.model.UrlMethodMapping;
+import com.app.framework.model.UrlMethod;
 import java.lang.reflect.Method;
 import mg.itu.framework.annotation.UrlMapping;
 
@@ -40,7 +41,7 @@ public class Util {
         return classes;
     }
 
-    public static void findUrlMethodMappings(List<String> packageNames, Map<String, UrlMethodMapping> urlMethodMappings, Class<? extends Annotation> classAnnotation, Class<? extends Annotation> methodAnnotation) throws Exception {
+    public static void findUrlMethodMappings(List<String> packageNames, Map<UrlMethod, UrlMethodMapping> urlMethodMappings, Class<? extends Annotation> classAnnotation, Class<? extends Annotation> methodAnnotation) throws Exception {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         for (String packageName: packageNames) {
             String path = packageName.replace('.', '/');
@@ -66,10 +67,13 @@ public class Util {
 
                                 if (methAnnotation.annotationType() == UrlMapping.class) {
                                     UrlMapping urlMapping = (UrlMapping) methAnnotation;
-                                    String url = urlMapping.value();
+                                    String url = urlMapping.path();
+                                    String httpMethod = urlMapping.method();
+
+                                    UrlMethod urlMethod = new UrlMethod(url, httpMethod);
                                     
                                     UrlMethodMapping mapping = new UrlMethodMapping(clazz, m);
-                                    urlMethodMappings.put(url, mapping);
+                                    urlMethodMappings.put(urlMethod, mapping);
                                 }
 
                             }
@@ -83,9 +87,5 @@ public class Util {
     public static List<String> splitString(String str, String separator) {
         String[] splitted = str.split(separator);
         return new ArrayList<>(List.of(splitted));
-    }
-
-    public static UrlMethodMapping getUrlSupported(Map<String, UrlMethodMapping> urlMethodMappings, String url) {
-        return urlMethodMappings.get(url);
     }
 }
