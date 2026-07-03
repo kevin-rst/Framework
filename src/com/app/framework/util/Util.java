@@ -1,14 +1,14 @@
 package com.app.framework.util;
 
+import com.app.framework.model.UrlMethod;
+import com.app.framework.model.UrlMethodMapping;
 import java.io.File;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
 import java.net.URL;
-import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
-import com.app.framework.model.UrlMethodMapping;
-import com.app.framework.model.UrlMethod;
-import java.lang.reflect.Method;
+import java.util.Map;
 import mg.itu.framework.annotation.UrlMapping;
 
 public class Util {
@@ -73,7 +73,12 @@ public class Util {
                                     UrlMethod urlMethod = new UrlMethod(url, httpMethod);
                                     
                                     UrlMethodMapping mapping = new UrlMethodMapping(clazz, m);
-                                    urlMethodMappings.put(urlMethod, mapping);
+
+                                    if (!urlMethodMappings.containsKey(urlMethod)) {
+                                        urlMethodMappings.put(urlMethod, mapping);
+                                    } else {
+                                        throw new Exception("Duplicate URL mapping found for " + httpMethod + " " + url + " in class " + clazz.getName() + " method " + m.getName());
+                                    }
                                 }
 
                             }
