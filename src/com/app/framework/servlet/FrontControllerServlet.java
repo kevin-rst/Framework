@@ -7,22 +7,22 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Map;
-import java.util.HashMap;
 import java.util.List;
-import java.util.ArrayList;
-import mg.itu.framework.annotation.Controller;
-import com.app.framework.util.Util;
 import com.app.framework.model.UrlMethodMapping;
 import com.app.framework.model.UrlMethod;
-import mg.itu.framework.annotation.UrlMapping;
 import java.lang.reflect.Constructor;
+import com.app.framework.model.ModelAndView;
 
 public class FrontControllerServlet extends HttpServlet {
     List<String> listControllers;
     Map<UrlMethod, UrlMethodMapping> urlMethodMappings;
+    String prefix;
+    String suffix;
 
     public void init() throws ServletException {
         try {
+            prefix = (String) getServletContext().getAttribute("prefix");
+            suffix = (String) getServletContext().getAttribute("suffix");
             listControllers = (List<String>) getServletContext().getAttribute("listControllers");
             urlMethodMappings = (Map<UrlMethod, UrlMethodMapping>) getServletContext().getAttribute("urlMethodMappings");
         } catch (Exception e) {
@@ -74,7 +74,27 @@ public class FrontControllerServlet extends HttpServlet {
                 Object controllerInstance = constructor.newInstance();
 
                 Object result = supported.getMethod().invoke(controllerInstance);
-                out.println("Output: " + result);
+                
+                if (result != null) {
+                    if (result instanceof ModelAndView) {
+                        ModelAndView model = (ModelAndView) result;
+
+                        String view = model.getView();
+                        Map<String, Object> modelData = model.getModel();
+
+                        for (Map.Entry<String, Object> entry : modelData.entrySet()) {
+                            String key = entry.getKey();
+                            Object value = entry.getValue();
+                            
+                            request.setAttribute(key, value);
+                        }
+
+                        request.getRequestDispatcher(prefix + view + suffix).forward(request, response);
+                    } else {
+                        out.println("Output: " + result);
+                    }
+                }
+
             } catch (Exception e) {
                 e.printStackTrace(out);
             }
