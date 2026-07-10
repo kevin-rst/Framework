@@ -18,12 +18,16 @@ import com.app.framework.util.Util;
 public class AppInitializer implements ServletContextListener {
     private List<String> listControllers = new ArrayList<>();
     private Map<UrlMethod, UrlMethodMapping> urlMethodMappings = new HashMap<>();
+    private String prefix;
+    private String suffix;
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
         ServletContext servletContext = sce.getServletContext();
 
         List<String> packageNames = Util.splitString(servletContext.getInitParameter("scanPackages"), ",");
+        prefix = servletContext.getInitParameter("prefix");
+        suffix = servletContext.getInitParameter("suffix");
 
         try {
             listControllers = Util.findClasses(packageNames, Controller.class);
@@ -35,6 +39,8 @@ public class AppInitializer implements ServletContextListener {
 
         servletContext.setAttribute("listControllers", listControllers);
         servletContext.setAttribute("urlMethodMappings", urlMethodMappings);
+        servletContext.setAttribute("prefix", prefix);
+        servletContext.setAttribute("suffix", suffix);
     }
 
     @Override

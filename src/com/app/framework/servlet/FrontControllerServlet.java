@@ -7,14 +7,9 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Map;
-import java.util.HashMap;
 import java.util.List;
-import java.util.ArrayList;
-import mg.itu.framework.annotation.Controller;
-import com.app.framework.util.Util;
 import com.app.framework.model.UrlMethodMapping;
 import com.app.framework.model.UrlMethod;
-import mg.itu.framework.annotation.UrlMapping;
 import java.lang.reflect.Constructor;
 import com.app.framework.model.ModelAndView;
 
@@ -26,8 +21,8 @@ public class FrontControllerServlet extends HttpServlet {
 
     public void init() throws ServletException {
         try {
-            prefix = this.getInitParameter("prefix");
-            suffix = this.getInitParameter("suffix");
+            prefix = (String) getServletContext().getAttribute("prefix");
+            suffix = (String) getServletContext().getAttribute("suffix");
             listControllers = (List<String>) getServletContext().getAttribute("listControllers");
             urlMethodMappings = (Map<UrlMethod, UrlMethodMapping>) getServletContext().getAttribute("urlMethodMappings");
         } catch (Exception e) {
