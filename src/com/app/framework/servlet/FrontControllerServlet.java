@@ -12,6 +12,8 @@ import com.app.framework.model.UrlMethodMapping;
 import com.app.framework.model.UrlMethod;
 import java.lang.reflect.Constructor;
 import com.app.framework.model.ModelAndView;
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.context.support.WebApplicationContextUtils;
 
 public class FrontControllerServlet extends HttpServlet {
     List<String> listControllers;
@@ -20,6 +22,8 @@ public class FrontControllerServlet extends HttpServlet {
     String suffix;
 
     public void init() throws ServletException {
+       
+
         try {
             prefix = (String) getServletContext().getAttribute("prefix");
             suffix = (String) getServletContext().getAttribute("suffix");
@@ -69,11 +73,29 @@ public class FrontControllerServlet extends HttpServlet {
         if (supported != null) {
             out.println("URL info: " + urlMethod.getHttpMethod()  + " " + urlMethod.getUrl() + " " + supported.getClazz().getName() + " -> " + supported.getMethod().getName());
 
+            Object result = null;
+
             try {
                 Constructor<?> constructor = supported.getClazz().getDeclaredConstructor();
                 Object controllerInstance = constructor.newInstance();
 
-                Object result = supported.getMethod().invoke(controllerInstance);
+                boolean hasParam = false;
+                for (Class<?> paramType: supported.getMethod().getParameterTypes()) {
+                    if (paramType.equals(WebApplicationContext.class)) {
+
+                        WebApplicationContext ctx =
+                                WebApplicationContextUtils.getRequiredWebApplicationContext(getServletContext());
+
+                        result = supported.getMethod().invoke(controllerInstance, ctx);
+
+                        hasParam = true;
+                        break;
+                    }
+                }
+
+                if (!hasParam) {
+                    result = supported.getMethod().invoke(controllerInstance);
+                }
                 
                 if (result != null) {
                     if (result instanceof ModelAndView) {

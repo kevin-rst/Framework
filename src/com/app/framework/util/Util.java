@@ -23,7 +23,7 @@ public class Util {
             if (resource == null) {
                 continue;
             }
-    
+                
             File directory = new File(resource.toURI());
     
             for (File file: directory.listFiles()) {
@@ -60,8 +60,13 @@ public class Util {
     
                     if (clazz.isAnnotationPresent(classAnnotation)) {
                         Method[] methods = clazz.getDeclaredMethods();
+                        
+                        System.out.println(clazz.getName());
 
                         for (Method m: methods) {
+
+                            System.out.println("  " + m.getName());
+
                             if (m.isAnnotationPresent(methodAnnotation)) {
                                 Annotation methAnnotation = m.getAnnotation(methodAnnotation);
 
