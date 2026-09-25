@@ -2,6 +2,7 @@ package com.app.framework.util;
 
 import com.app.framework.model.UrlMethod;
 import com.app.framework.model.UrlMethodMapping;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -97,5 +98,9 @@ public class Util {
     public static List<String> splitString(String str, String separator) {
         String[] splitted = str.split(separator);
         return new ArrayList<>(List.of(splitted));
+    }
+
+    public static String toJson(ObjectMapper mapper, Object o) throws Exception {
+        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(o);
     }
 }

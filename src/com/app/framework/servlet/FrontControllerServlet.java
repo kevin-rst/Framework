@@ -10,25 +10,28 @@ import java.util.Map;
 import java.util.List;
 import com.app.framework.model.UrlMethodMapping;
 import com.app.framework.model.UrlMethod;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.lang.reflect.Constructor;
 import com.app.framework.model.ModelAndView;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
+import mg.itu.framework.annotation.WebAPI;
+import com.app.framework.util.Util;
 
 public class FrontControllerServlet extends HttpServlet {
     List<String> listControllers;
     Map<UrlMethod, UrlMethodMapping> urlMethodMappings;
     String prefix;
     String suffix;
+    ObjectMapper mapper;
 
     public void init() throws ServletException {
-       
-
         try {
             prefix = (String) getServletContext().getAttribute("prefix");
             suffix = (String) getServletContext().getAttribute("suffix");
             listControllers = (List<String>) getServletContext().getAttribute("listControllers");
             urlMethodMappings = (Map<UrlMethod, UrlMethodMapping>) getServletContext().getAttribute("urlMethodMappings");
+            mapper = (ObjectMapper) getServletContext().getAttribute("mapper");
         } catch (Exception e) {
             throw new ServletException("Error initializing FrontControllerServlet", e);
         }
@@ -113,7 +116,21 @@ public class FrontControllerServlet extends HttpServlet {
 
                         request.getRequestDispatcher(prefix + view + suffix).forward(request, response);
                     } else {
-                        out.println("Output: " + result);
+                        Object value = null;
+
+                        if (supported.getMethod().isAnnotationPresent(WebAPI.class)) {
+                            WebAPI webAPI = supported.getMethod().getAnnotation(WebAPI.class);
+
+                            if (webAPI.serialize()) {
+                                value = Util.toJson(mapper, result);
+                            } else {
+                                value = result;
+                            }
+                        } else {
+                            value = result;
+                        }
+
+                        out.println("Output: " + value);
                     }
                 }
 

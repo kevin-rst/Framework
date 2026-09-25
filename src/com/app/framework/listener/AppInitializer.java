@@ -14,12 +14,14 @@ import java.util.ArrayList;
 import com.app.framework.model.UrlMethodMapping;
 import com.app.framework.model.UrlMethod;
 import com.app.framework.util.Util;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class AppInitializer implements ServletContextListener {
     private List<String> listControllers = new ArrayList<>();
     private Map<UrlMethod, UrlMethodMapping> urlMethodMappings = new HashMap<>();
     private String prefix;
     private String suffix;
+    private ObjectMapper mapper;
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
@@ -28,6 +30,7 @@ public class AppInitializer implements ServletContextListener {
         List<String> packageNames = Util.splitString(servletContext.getInitParameter("scanPackages"), ",");
         prefix = servletContext.getInitParameter("prefix");
         suffix = servletContext.getInitParameter("suffix");
+        mapper = new ObjectMapper();
 
         try {
             listControllers = Util.findClasses(packageNames, Controller.class);
@@ -41,6 +44,7 @@ public class AppInitializer implements ServletContextListener {
         servletContext.setAttribute("urlMethodMappings", urlMethodMappings);
         servletContext.setAttribute("prefix", prefix);
         servletContext.setAttribute("suffix", suffix);
+        servletContext.setAttribute("mapper", mapper);
     }
 
     @Override
