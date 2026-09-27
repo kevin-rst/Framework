@@ -2,6 +2,7 @@ package com.app.framework.servlet;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -46,8 +47,8 @@ public class FrontControllerServlet extends HttpServlet {
     }
 
     public void processRequest(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        response.setContentType("text/plain");
-        PrintWriter out = response.getWriter();
+        StringWriter buffer = new StringWriter();
+        PrintWriter out = new PrintWriter(buffer);
 
         String path = request.getRequestURI();
         String context = request.getContextPath();
@@ -116,21 +117,26 @@ public class FrontControllerServlet extends HttpServlet {
 
                         request.getRequestDispatcher(prefix + view + suffix).forward(request, response);
                     } else {
-                        Object value = null;
 
                         if (supported.getMethod().isAnnotationPresent(WebAPI.class)) {
                             WebAPI webAPI = supported.getMethod().getAnnotation(WebAPI.class);
 
+                            response.setContentType("application/json");
+
+                            Object output = result;
+
                             if (webAPI.serialize()) {
-                                value = Util.toJson(mapper, result);
-                            } else {
-                                value = result;
+                                output = Util.toJson(mapper, result);
                             }
+
+                            response.getWriter().println(output);
                         } else {
-                            value = result;
+                            out.println("Output: " + result);
+
+                            response.setContentType("text/plain");
+                            response.getWriter().println(buffer.toString());
                         }
 
-                        out.println("Output: " + value);
                     }
                 }
 
@@ -143,6 +149,9 @@ public class FrontControllerServlet extends HttpServlet {
             for (UrlMethod urlMeth: urlMethodMappings.keySet()) {
                 out.println("- " + urlMeth.getHttpMethod() + " " + urlMeth.getUrl());
             }
+
+            response.setContentType("text/plain");
+            response.getWriter().println(buffer.toString());
         }
 
     }
