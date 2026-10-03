@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Map;
 import java.util.List;
+import java.lang.reflect.Parameter;
 import com.app.framework.model.UrlMethodMapping;
 import com.app.framework.model.UrlMethod;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -83,22 +84,23 @@ public class FrontControllerServlet extends HttpServlet {
                 Constructor<?> constructor = supported.getClazz().getDeclaredConstructor();
                 Object controllerInstance = constructor.newInstance();
 
-                boolean hasParam = false;
-                for (Class<?> paramType: supported.getMethod().getParameterTypes()) {
-                    if (paramType.equals(WebApplicationContext.class)) {
+                Parameter[] parameters = supported.getMethod().getParameters();
+                Object[] arguments = new Object[parameters.length];
 
-                        WebApplicationContext ctx =
-                                WebApplicationContextUtils.getRequiredWebApplicationContext(getServletContext());
-
-                        result = supported.getMethod().invoke(controllerInstance, ctx);
-
-                        hasParam = true;
-                        break;
+                for (int i = 0; i < parameters.length; i++) {
+                    if (parameters[i].getType().equals(WebApplicationContext.class)) {
+                        WebApplicationContext ctx = WebApplicationContextUtils.getRequiredWebApplicationContext(getServletContext());
+                        arguments[i] = ctx;
+                    } else {
+                        String value = params.get(parameters[i].getName()) != null ? params.get(parameters[i].getName())[0] : null;
+                        arguments[i] = Util.convert(value, parameters[i].getType());            
                     }
                 }
 
-                if (!hasParam) {
+                if (parameters.length == 0) {
                     result = supported.getMethod().invoke(controllerInstance);
+                } else {
+                    result = supported.getMethod().invoke(controllerInstance, arguments);
                 }
                 
                 if (result != null) {
