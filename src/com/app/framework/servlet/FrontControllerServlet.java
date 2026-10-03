@@ -22,6 +22,7 @@ import com.app.framework.util.Util;
 
 public class FrontControllerServlet extends HttpServlet {
     List<String> listControllers;
+    List<String> listRequestPackages;
     Map<UrlMethod, UrlMethodMapping> urlMethodMappings;
     String prefix;
     String suffix;
@@ -32,6 +33,7 @@ public class FrontControllerServlet extends HttpServlet {
             prefix = (String) getServletContext().getAttribute("prefix");
             suffix = (String) getServletContext().getAttribute("suffix");
             listControllers = (List<String>) getServletContext().getAttribute("listControllers");
+            listRequestPackages = (List<String>) getServletContext().getAttribute("listRequestPackages");
             urlMethodMappings = (Map<UrlMethod, UrlMethodMapping>) getServletContext().getAttribute("urlMethodMappings");
             mapper = (ObjectMapper) getServletContext().getAttribute("mapper");
         } catch (Exception e) {
@@ -91,6 +93,8 @@ public class FrontControllerServlet extends HttpServlet {
                     if (parameters[i].getType().equals(WebApplicationContext.class)) {
                         WebApplicationContext ctx = WebApplicationContextUtils.getRequiredWebApplicationContext(getServletContext());
                         arguments[i] = ctx;
+                    } else if (Util.isRequestClass(parameters[i].getType(), listRequestPackages)) {
+                        arguments[i] = Util.bind(parameters[i].getType(), params, listRequestPackages);
                     } else {
                         String value = params.get(parameters[i].getName()) != null ? params.get(parameters[i].getName())[0] : null;
                         arguments[i] = Util.convert(value, parameters[i].getType());            

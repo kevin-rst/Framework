@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.Field;
+import java.lang.reflect.Constructor;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -134,5 +136,54 @@ public class Util {
         }
 
         return conversion;
+    }
+
+    public static boolean isRequestClass(Class<?> clazz, List<String> requestPackages) {
+        for (String requestPackage: requestPackages) {
+            if (clazz.getName().startsWith(requestPackage + ".")) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static Object bind(Class<?> clazz, Map<String, String[]> params, List<String> requestPackages) throws Exception {
+        Constructor<?> c = clazz.getDeclaredConstructor();
+        Object instance = c.newInstance();
+
+        Field[] fields = instance.getClass().getDeclaredFields();
+
+        for (Field field: fields) {
+            field.setAccessible(true);
+
+            String name = field.getName();
+            Class<?> type = field.getType();
+
+            Object conversion = null;
+
+            if (Util.isRequestClass(type, requestPackages)) {
+                conversion = bind(type, params, requestPackages);
+            } else {
+                String value = params.get(name) != null ? params.get(name)[0] : null;
+                conversion = Util.convert(value, type);
+            }
+
+            Util.set(instance, field, conversion);
+        }
+
+        return instance;
+    }
+
+    public static String capitalize(String str) {
+        return str.substring(0, 1).toUpperCase() + str.substring(1);
+    }
+
+    public static void set(Object instance, Field field, Object value) throws Exception {
+        Class<?>[] paramTypes = { field.getType() };
+        Object[] args = { value };
+
+        Method method = instance.getClass().getDeclaredMethod("set" + Util.capitalize(field.getName()), paramTypes);
+        method.invoke(instance, args);
     }
 }
