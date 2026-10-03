@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import mg.itu.framework.annotation.UrlMapping;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class Util {
     public static List<String> findClasses(List<String> packageNames, Class<? extends Annotation> classAnnotation) throws Exception {
@@ -102,5 +104,35 @@ public class Util {
 
     public static String toJson(ObjectMapper mapper, Object o) throws Exception {
         return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(o);
+    }
+
+    public static Object convert(String value, Class<?> type) {
+        Object conversion = null;
+
+        if (value == null) {
+            return null;
+        }
+
+        if (type.equals(int.class) || type.equals(Integer.class)) {
+            conversion = Integer.parseInt(value);
+        } else if (type.equals(long.class) || type.equals(Long.class)) {
+            conversion = Long.parseLong(value);
+        } else if (type.equals(float.class) || type.equals(Float.class)) {
+            conversion = Float.parseFloat(value);
+        } else if (type.equals(double.class) || type.equals(Double.class)) {
+            conversion = Double.parseDouble(value);
+        } else if (type.equals(String.class)) {
+            conversion = value;
+        } else if (type.equals(char.class) || type.equals(Character.class)) {
+            conversion = value.charAt(0);
+        } else if (type.equals(boolean.class) || type.equals(Boolean.class)) {
+            conversion = Boolean.parseBoolean(value);
+        } else if (type.equals(LocalDate.class)) {
+            conversion = LocalDate.parse(value);
+        } else if (type.equals(LocalDateTime.class)) {
+            conversion = LocalDateTime.parse(value);
+        }
+
+        return conversion;
     }
 }
