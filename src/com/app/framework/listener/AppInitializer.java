@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class AppInitializer implements ServletContextListener {
     private List<String> listControllers = new ArrayList<>();
+    private List<String> listRequestPackages = new ArrayList<>();
     private Map<UrlMethod, UrlMethodMapping> urlMethodMappings = new HashMap<>();
     private String prefix;
     private String suffix;
@@ -28,6 +29,7 @@ public class AppInitializer implements ServletContextListener {
         ServletContext servletContext = sce.getServletContext();
 
         List<String> packageNames = Util.splitString(servletContext.getInitParameter("scanPackages"), ",");
+        listRequestPackages = Util.splitString(servletContext.getInitParameter("requestPackages"), ",");
         prefix = servletContext.getInitParameter("prefix");
         suffix = servletContext.getInitParameter("suffix");
         mapper = new ObjectMapper();
@@ -41,6 +43,7 @@ public class AppInitializer implements ServletContextListener {
         }
 
         servletContext.setAttribute("listControllers", listControllers);
+        servletContext.setAttribute("listRequestPackages", listRequestPackages);
         servletContext.setAttribute("urlMethodMappings", urlMethodMappings);
         servletContext.setAttribute("prefix", prefix);
         servletContext.setAttribute("suffix", suffix);

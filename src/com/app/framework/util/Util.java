@@ -6,6 +6,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.Field;
+import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +16,8 @@ import java.util.Map;
 import mg.itu.framework.annotation.UrlMapping;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 public class Util {
     public static List<String> findClasses(List<String> packageNames, Class<? extends Annotation> classAnnotation) throws Exception {
@@ -134,5 +139,122 @@ public class Util {
         }
 
         return conversion;
+    }
+
+    public static Object convert(String[] values, Class<?> type) {
+        if (values == null || values.length == 0) {
+            return null;
+        }
+
+        Object conversion = Array.newInstance(type, values.length);
+
+        for (int i = 0; i < values.length; i++) {
+            Object value = convert(values[i], type);
+            Array.set(conversion, i, value);
+        }
+
+        return conversion;
+    }
+
+    public static boolean isRequestClass(Class<?> clazz, List<String> requestPackages) {
+        for (String requestPackage: requestPackages) {
+            if (clazz.getName().startsWith(requestPackage + ".")) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static Object bind(Class<?> clazz, Map<String, String[]> params, int fieldIndex, List<String> requestPackages) throws Exception {
+        Constructor<?> c = clazz.getDeclaredConstructor();
+        Object instance = c.newInstance();
+
+        Field[] fields = instance.getClass().getDeclaredFields();
+
+        for (Field field: fields) {
+            field.setAccessible(true);
+
+            String name = field.getName();
+            Class<?> type = field.getType();
+
+            Object conversion = null;
+
+            if (type.isArray()) {
+                Class<?> elementType = type.getComponentType();
+
+                if (!Util.isRequestClass(elementType, requestPackages)) {
+                    String[] values = params.get(name) != null ? params.get(name) : null;
+                    conversion = Util.convert(values, elementType);
+                } else {
+                    conversion = Util.bind(elementType, params, requestPackages);
+                }
+            } else if (Util.isRequestClass(type, requestPackages)) {
+                conversion = bind(type, params, fieldIndex, requestPackages);
+            } else {
+                String value = params.get(name) != null ? params.get(name)[fieldIndex] : null;
+                conversion = Util.convert(value, type);
+            }
+
+            Util.set(instance, field, conversion);
+        }
+
+        return instance;
+    }
+
+    public static int findLength(Class<?> clazz, Map<String, String[]> params, List<String> requestPackages) {
+        Field[] fields = clazz.getDeclaredFields();
+
+        int length = 0;
+
+        for (Field field: fields) {
+            field.setAccessible(true);
+
+            String name = field.getName();
+            Class<?> type = field.getType();
+
+            if (Util.isRequestClass(type, requestPackages)) {
+                return findLength(type, params, requestPackages);
+            }
+
+            String[] values = params.get(name) != null ? params.get(name) : null;
+            length = values != null && values.length > 0 ? values.length : length;
+        }
+
+        return length;
+    }
+
+    public static Object bind(Class<?> clazz, Map<String, String[]> params, List<String> requestPackages) throws Exception {
+        int length = Util.findLength(clazz, params, requestPackages);
+
+        Object list = Array.newInstance(clazz, length);
+
+        for (int i = 0; i < length; i++) {
+            Object instance = bind(clazz, params, i, requestPackages);
+            Array.set(list, i, instance);
+        }
+
+        return list;
+    }
+
+    public static String capitalize(String str) {
+        return str.substring(0, 1).toUpperCase() + str.substring(1);
+    }
+
+    public static void set(Object instance, Field field, Object value) throws Exception {
+        Class<?>[] paramTypes = { field.getType() };
+        Object[] args = { value };
+
+        Method method = instance.getClass().getDeclaredMethod("set" + Util.capitalize(field.getName()), paramTypes);
+        method.invoke(instance, args);
+    }
+
+    public static String getStackTrace(Exception e) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+
+        e.printStackTrace(pw);
+
+        return sw.toString();
     }
 }
