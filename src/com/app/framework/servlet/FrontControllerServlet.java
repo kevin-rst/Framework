@@ -93,8 +93,17 @@ public class FrontControllerServlet extends HttpServlet {
                     if (parameters[i].getType().equals(WebApplicationContext.class)) {
                         WebApplicationContext ctx = WebApplicationContextUtils.getRequiredWebApplicationContext(getServletContext());
                         arguments[i] = ctx;
+                    } else if (parameters[i].getType().isArray()) {
+                        Class<?> elementType = parameters[i].getType().getComponentType();
+
+                        if (!Util.isRequestClass(elementType, listRequestPackages)) {
+                            String[] values = params.get(parameters[i].getName()) != null ? params.get(parameters[i].getName()) : null;
+                            arguments[i] = Util.convert(values, elementType);
+                        } else {
+                            arguments[i] = Util.bind(elementType, params, listRequestPackages);
+                        }
                     } else if (Util.isRequestClass(parameters[i].getType(), listRequestPackages)) {
-                        arguments[i] = Util.bind(parameters[i].getType(), params, listRequestPackages);
+                        arguments[i] = Util.bind(parameters[i].getType(), params, 0, listRequestPackages);
                     } else {
                         String value = params.get(parameters[i].getName()) != null ? params.get(parameters[i].getName())[0] : null;
                         arguments[i] = Util.convert(value, parameters[i].getType());            
@@ -106,7 +115,7 @@ public class FrontControllerServlet extends HttpServlet {
                 } else {
                     result = supported.getMethod().invoke(controllerInstance, arguments);
                 }
-                
+
                 if (result != null) {
                     if (result instanceof ModelAndView) {
                         ModelAndView model = (ModelAndView) result;
@@ -147,7 +156,7 @@ public class FrontControllerServlet extends HttpServlet {
                 }
 
             } catch (Exception e) {
-                e.printStackTrace(out);
+                throw new ServletException(Util.getStackTrace(e));
             }
         } else {
             out.println("Here are all supported URLs: ");
