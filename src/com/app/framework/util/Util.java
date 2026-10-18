@@ -13,11 +13,19 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import mg.itu.framework.annotation.UrlMapping;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import jakarta.servlet.http.Part;
+import com.app.framework.model.MapFile;
+import java.util.Collection;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import com.app.framework.config.Loader;
 
 public class Util {
     public static List<String> findClasses(List<String> packageNames, Class<? extends Annotation> classAnnotation) throws Exception {
@@ -256,5 +264,58 @@ public class Util {
         e.printStackTrace(pw);
 
         return sw.toString();
+    }
+
+    public static MapFile toMapFile(Part file) throws Exception {
+        if (file == null || file.getSize() == 0) {
+            throw new Exception("Fichier introuvable ou contenu vide.");
+        }
+
+        String nomComplet = file.getSubmittedFileName();
+
+        int index = nomComplet.lastIndexOf('.');
+
+        String nom = UUID.randomUUID().toString();
+        String extension;
+
+        if (index > 0) {
+            extension = nomComplet.substring(index + 1);
+        } else {
+            extension = "";
+        }
+
+        byte[] content = file.getInputStream().readAllBytes();
+
+        return new MapFile(nom, extension, content);
+    }
+
+    public static MapFile[] toMapFiles(Collection<Part> files, String fieldName) throws Exception {
+        List<MapFile> mapFilesList = new ArrayList<>();
+
+        for (Part file: files) {
+            if (file.getName().equals(fieldName)) {
+                mapFilesList.add(Util.toMapFile(file));
+            }
+        }
+
+        return mapFilesList.toArray(MapFile[]::new);
+    }
+
+    public static void saveUploadedFile(MapFile file) throws Exception {
+        String fileName = file.getNom() + "." + file.getExtension();
+        String uploadDir = Loader.get("upload.directory");
+
+        Path folderPath = Paths.get(uploadDir);
+
+        Files.createDirectories(folderPath);
+        Path filePath = folderPath.resolve(fileName);
+
+        Files.write(filePath, file.getContent());
+    }
+
+    public static void saveUploadedFiles(MapFile[] files) throws Exception {
+        for (MapFile file: files) {
+            Util.saveUploadedFile(file);
+        }
     }
 }

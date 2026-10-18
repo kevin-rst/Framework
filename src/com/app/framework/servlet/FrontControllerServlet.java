@@ -7,8 +7,11 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Part;
+import jakarta.servlet.annotation.MultipartConfig;
 import java.util.Map;
 import java.util.List;
+import java.util.Collection;
 import java.lang.reflect.Parameter;
 import com.app.framework.model.UrlMethodMapping;
 import com.app.framework.model.UrlMethod;
@@ -19,7 +22,9 @@ import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 import mg.itu.framework.annotation.WebAPI;
 import com.app.framework.util.Util;
+import com.app.framework.model.MapFile;
 
+@MultipartConfig
 public class FrontControllerServlet extends HttpServlet {
     List<String> listControllers;
     List<String> listRequestPackages;
@@ -95,13 +100,19 @@ public class FrontControllerServlet extends HttpServlet {
                         arguments[i] = ctx;
                     } else if (parameters[i].getType().isArray()) {
                         Class<?> elementType = parameters[i].getType().getComponentType();
-
-                        if (!Util.isRequestClass(elementType, listRequestPackages)) {
+                        
+                        if (elementType.equals(MapFile.class)) {
+                            Collection<Part> files = request.getParts();
+                            arguments[i] = Util.toMapFiles(files, parameters[i].getName());
+                        } else if (!Util.isRequestClass(elementType, listRequestPackages)) {
                             String[] values = params.get(parameters[i].getName()) != null ? params.get(parameters[i].getName()) : null;
                             arguments[i] = Util.convert(values, elementType);
                         } else {
                             arguments[i] = Util.bind(elementType, params, listRequestPackages);
                         }
+                    } else if (parameters[i].getType().equals(MapFile.class)) {
+                        Part file = request.getPart(parameters[i].getName());
+                        arguments[i] = Util.toMapFile(file);
                     } else if (Util.isRequestClass(parameters[i].getType(), listRequestPackages)) {
                         arguments[i] = Util.bind(parameters[i].getType(), params, 0, listRequestPackages);
                     } else {
