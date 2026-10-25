@@ -26,6 +26,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import com.app.framework.config.Loader;
+import com.app.framework.model.SSession;
+import jakarta.servlet.http.HttpSession;
+import java.util.Enumeration;
+import jakarta.servlet.ServletContext;
 
 public class Util {
     public static List<String> findClasses(List<String> packageNames, Class<? extends Annotation> classAnnotation) throws Exception {
@@ -316,6 +320,38 @@ public class Util {
     public static void saveUploadedFiles(MapFile[] files) throws Exception {
         for (MapFile file: files) {
             Util.saveUploadedFile(file);
+        }
+    }
+
+    public static SSession getSSession(ServletContext context, HttpSession httpSession) {
+        SSession session = null;
+
+        if (context.getAttribute(httpSession.getId()) == null) {
+            session = new SSession();
+        } else {
+            session = (SSession) context.getAttribute(httpSession.getId());
+        }
+
+        Enumeration<String> attributeNames = httpSession.getAttributeNames();
+        while (attributeNames.hasMoreElements()) {
+            String attributeName = attributeNames.nextElement();
+            Object attributeValue = httpSession.getAttribute(attributeName);
+            session.setAttribute(attributeName, attributeValue);
+        }
+
+        context.setAttribute(httpSession.getId(), session);
+        return session; 
+    }
+
+    public static void updateHttpSession(HttpSession httpSession, SSession sSession) {
+        Enumeration<String> attributeNames = httpSession.getAttributeNames();
+        while (attributeNames.hasMoreElements()) {
+            String attributeName = attributeNames.nextElement();
+            httpSession.removeAttribute(attributeName);
+        }
+
+        for (Map.Entry<String, Object> entry : sSession.getAttributes().entrySet()) {
+            httpSession.setAttribute(entry.getKey(), entry.getValue());
         }
     }
 }

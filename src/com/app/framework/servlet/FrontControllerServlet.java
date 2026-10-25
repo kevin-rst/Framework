@@ -23,6 +23,7 @@ import org.springframework.web.context.support.WebApplicationContextUtils;
 import mg.itu.framework.annotation.WebAPI;
 import com.app.framework.util.Util;
 import com.app.framework.model.MapFile;
+import com.app.framework.model.SSession;
 
 @MultipartConfig
 public class FrontControllerServlet extends HttpServlet {
@@ -88,8 +89,18 @@ public class FrontControllerServlet extends HttpServlet {
             Object result = null;
 
             try {
-                Constructor<?> constructor = supported.getClazz().getDeclaredConstructor();
-                Object controllerInstance = constructor.newInstance();
+                Object controllerInstance = null;
+
+                if (getServletContext().getAttribute(supported.getClazz().getName()) == null) {
+                    Constructor<?> constructor = supported.getClazz().getDeclaredConstructor();
+                    controllerInstance = constructor.newInstance();
+
+                    getServletContext().setAttribute(supported.getClazz().getName(), controllerInstance);
+                } else {
+                    controllerInstance = getServletContext().getAttribute(supported.getClazz().getName());
+                }
+
+                SSession session = null;
 
                 Parameter[] parameters = supported.getMethod().getParameters();
                 Object[] arguments = new Object[parameters.length];
@@ -98,6 +109,9 @@ public class FrontControllerServlet extends HttpServlet {
                     if (parameters[i].getType().equals(WebApplicationContext.class)) {
                         WebApplicationContext ctx = WebApplicationContextUtils.getRequiredWebApplicationContext(getServletContext());
                         arguments[i] = ctx;
+                    } else if (parameters[i].getType().equals(SSession.class)) {
+                        session = Util.getSSession(getServletContext(), request.getSession());
+                        arguments[i] = session;
                     } else if (parameters[i].getType().isArray()) {
                         Class<?> elementType = parameters[i].getType().getComponentType();
                         
@@ -125,6 +139,10 @@ public class FrontControllerServlet extends HttpServlet {
                     result = supported.getMethod().invoke(controllerInstance);
                 } else {
                     result = supported.getMethod().invoke(controllerInstance, arguments);
+                }
+
+                if (session != null) {
+                    Util.updateHttpSession(request.getSession(), session);
                 }
 
                 if (result != null) {
