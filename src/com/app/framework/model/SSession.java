@@ -33,4 +33,8 @@ public class SSession {
     public void removeAttribute(String name) {
         attributes.remove(name);
     }
+
+    public void invalidate() {
+        attributes.clear();
+    }
 }
