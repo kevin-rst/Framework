@@ -1,4 +1,5 @@
 mg/itu/framework/annotation/Controller.class
+mg/itu/framework/annotation/HasAnyRole.class
 mg/itu/framework/annotation/Authenticated.class
 com/app/framework/config/Loader.class
 com/app/framework/model/UrlMethod.class
