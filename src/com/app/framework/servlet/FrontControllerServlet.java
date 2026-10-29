@@ -97,7 +97,7 @@ public class FrontControllerServlet extends HttpServlet {
 
             try {
 
-                if (supported.getMethod().isAnnotationPresent(Authenticated.class)) {
+                if (supported.getMethod().isAnnotationPresent(Authenticated.class) || supported.getMethod().isAnnotationPresent(HasAnyRole.class)) {
                     if (request.getSession().getAttribute(authSessionName) == null) {
                         out.println("You must be authenticated to access this resource.");
 
@@ -109,14 +109,6 @@ public class FrontControllerServlet extends HttpServlet {
                 }
 
                 if (supported.getMethod().isAnnotationPresent(HasAnyRole.class)) {
-                    if (request.getSession().getAttribute(authSessionName) == null) {
-                        out.println("You must be authenticated to access this resource.");
-
-                        response.setContentType("text/plain");
-                        response.getWriter().println(buffer.toString());
-                        
-                        return;
-                    }
 
                     HasAnyRole hasAnyRole = supported.getMethod().getAnnotation(HasAnyRole.class);
                     
