@@ -47,8 +47,8 @@ public class FrontControllerServlet extends HttpServlet {
             listRequestPackages = (List<String>) getServletContext().getAttribute("listRequestPackages");
             urlMethodMappings = (Map<UrlMethod, UrlMethodMapping>) getServletContext().getAttribute("urlMethodMappings");
             mapper = (ObjectMapper) getServletContext().getAttribute("mapper");
-            authSessionName = getInitParameter("authSessionName");
-            roleSessionName = getInitParameter("roleSessionName");
+            authSessionName = (String) getServletContext().getAttribute("authSessionName");
+            roleSessionName = (String) getServletContext().getAttribute("roleSessionName");
         } catch (Exception e) {
             throw new ServletException("Error initializing FrontControllerServlet", e);
         }
@@ -135,6 +135,7 @@ public class FrontControllerServlet extends HttpServlet {
 
                 Object controllerInstance = null;
 
+                // singleton déjà pris en compte dans le contexte de l'application
                 if (getServletContext().getAttribute(supported.getClazz().getName()) == null) {
                     Constructor<?> constructor = supported.getClazz().getDeclaredConstructor();
                     controllerInstance = constructor.newInstance();
