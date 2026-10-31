@@ -11,6 +11,7 @@ import jakarta.servlet.http.Part;
 import jakarta.servlet.annotation.MultipartConfig;
 import java.util.Map;
 import java.util.List;
+import java.util.Arrays;
 import java.util.Collection;
 import java.lang.reflect.Parameter;
 import com.app.framework.model.UrlMethodMapping;
@@ -25,6 +26,7 @@ import com.app.framework.util.Util;
 import com.app.framework.model.MapFile;
 import com.app.framework.model.SSession;
 import mg.itu.framework.annotation.Authenticated;
+import mg.itu.framework.annotation.HasAnyRole;
 import jakarta.servlet.http.HttpSession;
 
 @MultipartConfig
@@ -35,7 +37,7 @@ public class FrontControllerServlet extends HttpServlet {
     String prefix;
     String suffix;
     ObjectMapper mapper;
-    String authSessionName;
+    String authSessionName, roleSessionName;
 
     public void init() throws ServletException {
         try {
@@ -46,6 +48,7 @@ public class FrontControllerServlet extends HttpServlet {
             urlMethodMappings = (Map<UrlMethod, UrlMethodMapping>) getServletContext().getAttribute("urlMethodMappings");
             mapper = (ObjectMapper) getServletContext().getAttribute("mapper");
             authSessionName = getInitParameter("authSessionName");
+            roleSessionName = getInitParameter("roleSessionName");
         } catch (Exception e) {
             throw new ServletException("Error initializing FrontControllerServlet", e);
         }
@@ -94,11 +97,34 @@ public class FrontControllerServlet extends HttpServlet {
 
             try {
 
-                if (supported.getMethod().isAnnotationPresent(Authenticated.class)) {
-                    HttpSession session = request.getSession();
-
-                    if (session.getAttribute(authSessionName) == null) {
+                if (supported.getMethod().isAnnotationPresent(Authenticated.class) || supported.getMethod().isAnnotationPresent(HasAnyRole.class)) {
+                    if (request.getSession().getAttribute(authSessionName) == null) {
                         out.println("You must be authenticated to access this resource.");
+
+                        response.setContentType("text/plain");
+                        response.getWriter().println(buffer.toString());
+                        
+                        return;
+                    }
+                }
+
+                if (supported.getMethod().isAnnotationPresent(HasAnyRole.class)) {
+
+                    HasAnyRole hasAnyRole = supported.getMethod().getAnnotation(HasAnyRole.class);
+                    
+                    boolean authorized = true;
+                    String role = (String) request.getSession().getAttribute(roleSessionName);
+
+                    if (role == null) {
+                        authorized = false;
+                    } else {
+                        if (!Arrays.asList(hasAnyRole.value()).contains(role)) {
+                            authorized = false;
+                        }
+                    }
+
+                    if (!authorized) {
+                        out.println("You're not authorized to access this resource.");
 
                         response.setContentType("text/plain");
                         response.getWriter().println(buffer.toString());
