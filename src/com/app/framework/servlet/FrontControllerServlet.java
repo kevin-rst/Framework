@@ -99,11 +99,7 @@ public class FrontControllerServlet extends HttpServlet {
 
                 if (supported.getMethod().isAnnotationPresent(Authenticated.class) || supported.getMethod().isAnnotationPresent(HasAnyRole.class)) {
                     if (request.getSession().getAttribute(authSessionName) == null) {
-                        out.println("You must be authenticated to access this resource.");
-
-                        response.setContentType("text/plain");
-                        response.getWriter().println(buffer.toString());
-                        
+                        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "You must be authenticated to access this resource.");
                         return;
                     }
                 }
@@ -124,18 +120,14 @@ public class FrontControllerServlet extends HttpServlet {
                     }
 
                     if (!authorized) {
-                        out.println("You're not authorized to access this resource.");
-
-                        response.setContentType("text/plain");
-                        response.getWriter().println(buffer.toString());
-                        
+                        response.sendError(HttpServletResponse.SC_FORBIDDEN, "You're not authorized to access this resource.");
                         return;
                     }
                 }
 
                 Object controllerInstance = null;
 
-                // singleton déjà pris en compte dans le contexte de l'application
+                // singleton déjà pris en compte
                 if (getServletContext().getAttribute(supported.getClazz().getName()) == null) {
                     Constructor<?> constructor = supported.getClazz().getDeclaredConstructor();
                     controllerInstance = constructor.newInstance();
