@@ -23,6 +23,7 @@ public class AppInitializer implements ServletContextListener {
     private String prefix;
     private String suffix;
     private ObjectMapper mapper;
+    private String authSessionName, roleSessionName;
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
@@ -33,6 +34,8 @@ public class AppInitializer implements ServletContextListener {
         prefix = servletContext.getInitParameter("prefix");
         suffix = servletContext.getInitParameter("suffix");
         mapper = new ObjectMapper();
+        authSessionName = servletContext.getInitParameter("authSessionName");
+        roleSessionName = servletContext.getInitParameter("roleSessionName");
 
         try {
             listControllers = Util.findClasses(packageNames, Controller.class);
@@ -48,6 +51,8 @@ public class AppInitializer implements ServletContextListener {
         servletContext.setAttribute("prefix", prefix);
         servletContext.setAttribute("suffix", suffix);
         servletContext.setAttribute("mapper", mapper);
+        servletContext.setAttribute("authSessionName", authSessionName);
+        servletContext.setAttribute("roleSessionName", roleSessionName);
     }
 
     @Override
