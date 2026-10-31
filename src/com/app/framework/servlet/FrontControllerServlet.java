@@ -24,6 +24,8 @@ import mg.itu.framework.annotation.WebAPI;
 import com.app.framework.util.Util;
 import com.app.framework.model.MapFile;
 import com.app.framework.model.SSession;
+import mg.itu.framework.annotation.Authenticated;
+import jakarta.servlet.http.HttpSession;
 
 @MultipartConfig
 public class FrontControllerServlet extends HttpServlet {
@@ -33,6 +35,7 @@ public class FrontControllerServlet extends HttpServlet {
     String prefix;
     String suffix;
     ObjectMapper mapper;
+    String authSessionName;
 
     public void init() throws ServletException {
         try {
@@ -42,6 +45,7 @@ public class FrontControllerServlet extends HttpServlet {
             listRequestPackages = (List<String>) getServletContext().getAttribute("listRequestPackages");
             urlMethodMappings = (Map<UrlMethod, UrlMethodMapping>) getServletContext().getAttribute("urlMethodMappings");
             mapper = (ObjectMapper) getServletContext().getAttribute("mapper");
+            authSessionName = getInitParameter("authSessionName");
         } catch (Exception e) {
             throw new ServletException("Error initializing FrontControllerServlet", e);
         }
@@ -89,6 +93,20 @@ public class FrontControllerServlet extends HttpServlet {
             Object result = null;
 
             try {
+
+                if (supported.getMethod().isAnnotationPresent(Authenticated.class)) {
+                    HttpSession session = request.getSession();
+
+                    if (session.getAttribute(authSessionName) == null) {
+                        out.println("You must be authenticated to access this resource.");
+
+                        response.setContentType("text/plain");
+                        response.getWriter().println(buffer.toString());
+                        
+                        return;
+                    }
+                }
+
                 Object controllerInstance = null;
 
                 if (getServletContext().getAttribute(supported.getClazz().getName()) == null) {

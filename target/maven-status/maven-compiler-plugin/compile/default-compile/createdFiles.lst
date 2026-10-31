@@ -1,12 +1,13 @@
 mg/itu/framework/annotation/Controller.class
-com/app/framework/model/MapFile.class
-com/app/framework/model/ModelAndView.class
+mg/itu/framework/annotation/Authenticated.class
 com/app/framework/config/Loader.class
 com/app/framework/model/UrlMethod.class
+com/app/framework/model/SSession.class
+mg/itu/framework/annotation/UrlMapping.class
+com/app/framework/model/MapFile.class
+com/app/framework/model/ModelAndView.class
 com/app/framework/util/Util.class
 com/app/framework/model/UrlMethodMapping.class
 mg/itu/framework/annotation/WebAPI.class
 com/app/framework/listener/AppInitializer.class
-com/app/framework/model/SSession.class
 com/app/framework/servlet/FrontControllerServlet.class
-mg/itu/framework/annotation/UrlMapping.class
